@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.text.Font?>
+
+<AnchorPane id="AnchorPane" prefHeight="400.0" prefWidth="600.0" style="-fx-border-color: #16a085; -fx-border-width: 5; -fx-background-color: #ecf0f1;" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="lk.ijse.project_ii.viewController.LectureDashboadController">
+   <children>
+      <AnchorPane fx:id="admin_dashboad" prefHeight="435.0" prefWidth="225.0" style="-fx-background-color: #95a5a6; -fx-border-width: 5; -fx-border-color: #16a085;" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.topAnchor="0.0">
+         <children>
+            <Label layoutX="39.0" layoutY="26.0" text="Lecture" textAlignment="CENTER" underline="true">
+               <font>
+                  <Font name="System Bold" size="31.0" />
+               </font>
+            </Label>
+            <Label layoutX="69.0" layoutY="63.0" text="DashBoad" />
+            <Button fx:id="class_sheduling_button" layoutX="26.0" layoutY="132.0" mnemonicParsing="false" onAction="#lecture_class_sheduling_button_OnAction" prefHeight="25.0" prefWidth="158.0" text="Class Sheduling" />
+            <Button fx:id="attendance_marking_button" layoutX="26.0" layoutY="183.0" mnemonicParsing="false" onAction="#lecture_attendance_marking_button_OnAction" prefHeight="25.0" prefWidth="158.0" text="Attendance Marking" />
+            <Button fx:id="attendance_reporting_button" layoutX="26.0" layoutY="232.0" mnemonicParsing="false" onAction="#lecture_attendance_reporting_button_OnAction" prefHeight="25.0" prefWidth="158.0" text="Attendance Reporting" />
+            <Button fx:id="back_button" layoutX="23.0" layoutY="305.0" mnemonicParsing="false" onAction="#lecture_back_button_OnAction" prefHeight="25.0" prefWidth="164.0" style="-fx-background-color: #c0392b; -fx-background-radius: 5;" text="Back" />
+         </children>
+      </AnchorPane>
+      <Label layoutX="341.0" layoutY="149.0" text="Lecture" textFill="#e8dddd">
+         <font>
+            <Font size="41.0" />
+         </font>
+      </Label>
+      <Label layoutX="371.0" layoutY="208.0" text="DashBoad" textFill="#e8dddd">
+         <font>
+            <Font size="16.0" />
+         </font>
+      </Label>
+   </children>
+</AnchorPane>
