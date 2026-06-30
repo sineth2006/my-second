@@ -177,8 +177,38 @@ private Connection connect;
     }
 
     @FXML
-    void Couse_Management_delete_button_OnAction(ActionEvent event) {
-
+    void Couse_Management_delete_button_OnAction(ActionEvent event) throws SQLException {
+           
+         int id=Integer.parseInt(course_id_txtbox.getText());
+         connect = DBConnection.getInstance().getConnection();
+            
+            try{if(connect!=null) {
+               
+                
+                String sql = "DELETE FROM course_management WHERE course_id =?";
+                
+                PreparedStatement stm = connect.prepareStatement(sql);
+                
+                stm.setInt(1, id);
+                
+                int result = stm.executeUpdate();
+               
+                if(result>0){
+                 alert.successmessage("Successfully deleted!!!");
+                   Object selectedItem = couse_management_table.getSelectionModel().getSelectedItem();
+                couse_management_table.getItems().remove(selectedItem);
+                
+                course_id_txtbox.clear();
+                  course_name_txtbox.clear();
+                  course_duration_txtbox.clear();
+                }else{
+                        System.out.println("Failed to delected course.");  
+                          }
+                }
+            }catch (Exception e) {
+            
+            }
+        
     }
     
    @FXML

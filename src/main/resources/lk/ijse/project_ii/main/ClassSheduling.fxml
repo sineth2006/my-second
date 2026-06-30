@@ -10,8 +10,7 @@
 <?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.text.Font?>
 
-
-<AnchorPane id="AnchorPane" prefHeight="400.0" prefWidth="700.0" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/25" fx:controller="lk.ijse.project_ii.viewController.ClassShedulingController">
+<AnchorPane id="AnchorPane" prefHeight="400.0" prefWidth="700.0" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="lk.ijse.project_ii.viewController.ClassShedulingController">
    <children>
       <AnchorPane id="AnchorPane" layoutX="10.0" layoutY="10.0" prefHeight="400.0" prefWidth="700.0">
          <children>
@@ -28,7 +27,7 @@
             <AnchorPane layoutX="6.0" layoutY="75.0" prefHeight="317.0" prefWidth="208.0" style="-fx-background-color: #CAD3C8;" AnchorPane.leftAnchor="2.0" AnchorPane.topAnchor="75.0">
                <children>
                   <Label layoutX="19.0" layoutY="6.0" text="Sheduling ID" />
-                  <TextField fx:id="student_id" layoutX="17.0" layoutY="23.0" prefHeight="25.0" prefWidth="178.0" promptText="Sheduling_ID" />
+                  <TextField fx:id="sheduling_id_txt" layoutX="17.0" layoutY="23.0" prefHeight="25.0" prefWidth="178.0" promptText="Sheduling_ID" />
                   <Label layoutX="17.0" layoutY="48.0" text="Couse ID" />
                   <Label layoutX="14.0" layoutY="90.0" text="Subject ID" />
                   <Label layoutX="15.0" layoutY="132.0" text="Lecture ID" />
@@ -36,12 +35,12 @@
                   <Button fx:id="class_sheduling_add_button" layoutX="10.0" layoutY="271.0" mnemonicParsing="false" onAction="#class_sheduling_add_button_OnAction" prefHeight="25.0" prefWidth="43.0" style="-fx-background-color: #FEA47F;" text="Add" />
                   <Button fx:id="class_sheduling_update_button" layoutX="64.0" layoutY="271.0" mnemonicParsing="false" onAction="#class_sheduling_update_button_OnAction" style="-fx-background-color: #58B19F;" text="Update" />
                   <Button fx:id="class_sheduling_delete_button" layoutX="135.0" layoutY="271.0" mnemonicParsing="false" onAction="#class_sheduling_delete_button_OnAction" style="-fx-background-color: #D6A2E8;" text="Delete" />
-                  <ComboBox fx:id="couse_id" layoutX="17.0" layoutY="65.0" prefHeight="25.0" prefWidth="178.0" />
-                  <ComboBox fx:id="subject_id" layoutX="17.0" layoutY="107.0" prefHeight="25.0" prefWidth="178.0" />
-                  <ComboBox fx:id="lecture_id" layoutX="15.0" layoutY="149.0" prefHeight="25.0" prefWidth="178.0" />
+                  <ComboBox fx:id="couse_id_combo" layoutX="17.0" layoutY="65.0" prefHeight="25.0" prefWidth="178.0" />
+                  <ComboBox fx:id="subject_id_combo" layoutX="17.0" layoutY="107.0" prefHeight="25.0" prefWidth="178.0" />
+                  <ComboBox fx:id="lecture_id_combo" layoutX="15.0" layoutY="149.0" prefHeight="25.0" prefWidth="178.0" />
                   <DatePicker fx:id="class_date" layoutX="13.0" layoutY="191.0" prefHeight="25.0" prefWidth="187.0" />
                   <Label layoutX="15.0" layoutY="216.0" text="Class Time" />
-                  <ComboBox fx:id="class_time" layoutX="15.0" layoutY="233.0" prefHeight="25.0" prefWidth="178.0" />
+                  <ComboBox fx:id="class_time_combo" layoutX="15.0" layoutY="233.0" prefHeight="25.0" prefWidth="178.0" />
                </children>
             </AnchorPane>
             <AnchorPane layoutX="220.0" layoutY="75.0" prefHeight="317.0" prefWidth="479.0" style="-fx-background-color: #CAD3C8;" AnchorPane.rightAnchor="2.0" AnchorPane.topAnchor="75.0">
@@ -51,13 +50,14 @@
                         <Font name="System Bold" size="13.0" />
                      </font>
                   </Label>
-                  <TableView layoutX="3.0" layoutY="49.0" prefHeight="256.0" prefWidth="470.0">
+                  <TableView fx:id="class_sheduling_table" layoutX="3.0" layoutY="49.0" onMouseClicked="#class_sheduling_table_tableClicked" prefHeight="256.0" prefWidth="470.0">
                      <columns>
-                        <TableColumn prefWidth="75.0" text="Student ID" />
-                        <TableColumn prefWidth="75.0" text="Student Name" />
-                        <TableColumn prefWidth="75.0" text="Tel No" />
-                        <TableColumn prefWidth="75.0" text="Email" />
-                        <TableColumn prefWidth="75.0" text="Couse ID" />
+                        <TableColumn fx:id="sheduling_id_column" prefWidth="75.0" text="Sheduling ID" />
+                        <TableColumn fx:id="course_id_column" prefWidth="75.0" text="Course ID" />
+                        <TableColumn fx:id="subject_id_column" prefWidth="75.0" text="Subject ID" />
+                        <TableColumn fx:id="lecture_id_column" prefWidth="75.0" text="Lecture ID" />
+                        <TableColumn fx:id="class_date_column" prefWidth="75.0" text="Class Date" />
+                        <TableColumn fx:id="class_time_column" prefWidth="75.0" text="Class Time" />
                      </columns>
                      <columnResizePolicy>
                         <TableView fx:constant="CONSTRAINED_RESIZE_POLICY" />

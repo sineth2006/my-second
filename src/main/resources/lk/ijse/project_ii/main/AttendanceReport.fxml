@@ -9,8 +9,7 @@
 <?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.text.Font?>
 
-
-<AnchorPane id="AnchorPane" prefHeight="400.0" prefWidth="700.0" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/25" fx:controller="lk.ijse.project_ii.viewController.AttendanceReportController">
+<AnchorPane id="AnchorPane" prefHeight="400.0" prefWidth="700.0" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="lk.ijse.project_ii.viewController.AttendanceReportController">
    <children>
       <AnchorPane layoutY="-8.0" prefHeight="84.0" prefWidth="700.0" style="-fx-background-color: #27ae60;">
          <children>
@@ -29,8 +28,8 @@
             <Label layoutX="177.0" layoutY="6.0" text="Subject ID" />
             <ComboBox fx:id="subjectid_combobox" layoutX="177.0" layoutY="23.0" prefWidth="150.0" />
             <Label layoutX="337.0" layoutY="6.0" text="Date Range" />
-            <DatePicker layoutX="330.0" layoutY="23.0" />
-            <DatePicker layoutX="330.0" layoutY="51.0" />
+            <DatePicker fx:id="date_range1" layoutX="330.0" layoutY="23.0" />
+            <DatePicker fx:id="date_range2" layoutX="330.0" layoutY="51.0" />
             <Button fx:id="attendance_report_clear_button" layoutX="562.0" layoutY="51.0" mnemonicParsing="false" onAction="#attendance_report_clear_button_OnAction" prefHeight="25.0" prefWidth="104.0" style="-fx-background-color: #f39c12;" text="Clear" textFill="#f2f2f2">
                <font>
                   <Font name="System Bold" size="11.0" />
@@ -43,13 +42,13 @@
             </Button>
          </children>
       </AnchorPane>
-      <TableView layoutY="174.0" prefHeight="227.0" prefWidth="701.0">
+      <TableView fx:id="attendance_report_table" layoutY="174.0" onMouseClicked="#attendance_report_table_mouse_clicked" prefHeight="227.0" prefWidth="701.0">
         <columns>
-          <TableColumn prefWidth="75.0" text="Student id" />
-          <TableColumn prefWidth="75.0" text="Student Name" />
-            <TableColumn prefWidth="75.0" text="Subject" />
-            <TableColumn prefWidth="75.0" text="Date Range" />
-            <TableColumn prefWidth="75.0" text="Status" />
+          <TableColumn fx:id="student_id_column" prefWidth="75.0" text="Student id" />
+          <TableColumn fx:id="student_name_column" prefWidth="75.0" text="Student Name" />
+            <TableColumn fx:id="subject_column" prefWidth="75.0" text="Subject" />
+            <TableColumn fx:id="date_range_column" prefWidth="75.0" text="Date Range" />
+            <TableColumn fx:id="status_column" prefWidth="75.0" text="Status" />
         </columns>
          <columnResizePolicy>
             <TableView fx:constant="CONSTRAINED_RESIZE_POLICY" />

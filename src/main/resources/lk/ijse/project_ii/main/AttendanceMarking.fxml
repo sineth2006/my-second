@@ -8,8 +8,7 @@
 <?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.text.Font?>
 
-
-<AnchorPane id="AnchorPane" prefHeight="400.0" prefWidth="700.0" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/25" fx:controller="lk.ijse.project_ii.viewController.AttendanceMarkingController">
+<AnchorPane id="AnchorPane" prefHeight="400.0" prefWidth="700.0" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="lk.ijse.project_ii.viewController.AttendanceMarkingController">
    <children>
       <AnchorPane prefHeight="80.0" prefWidth="712.0" style="-fx-background-color: #1abc9c;">
          <children>
@@ -28,7 +27,7 @@
                   <Font size="18.0" />
                </font>
             </Label>
-            <ComboBox fx:id="class_combobox" layoutX="14.0" layoutY="33.0" prefHeight="25.0" prefWidth="182.0" />
+            <ComboBox fx:id="class_combobox" layoutX="14.0" layoutY="33.0" onAction="#class_comboboxOnAction" prefHeight="25.0" prefWidth="182.0" />
             <Button fx:id="attendance_marking_save_attendance_button" layoutX="479.0" layoutY="31.0" mnemonicParsing="false" onAction="#attendance_marking_save_attendance_button_OnAction" prefHeight="27.0" prefWidth="128.0" style="-fx-background-color: #9b59b6;" text="+ Save Attendance" textFill="WHITE">
                <font>
                   <Font name="System Bold" size="12.0" />
@@ -41,12 +40,12 @@
             </Button>
          </children>
       </AnchorPane>
-      <TableView layoutY="174.0" prefHeight="227.0" prefWidth="712.0">
+      <TableView fx:id="attendance_marking_table" layoutY="174.0" onMouseClicked="#attendance_marking_table_clicked" prefHeight="227.0" prefWidth="712.0">
         <columns>
-          <TableColumn prefWidth="75.0" text="Sheduling ID" />
-          <TableColumn prefWidth="75.0" text="Student ID" />
-            <TableColumn prefWidth="75.0" text="Student Name" />
-            <TableColumn prefWidth="75.0" text="Status" />
+          <TableColumn fx:id="scheduling_id_column" prefWidth="75.0" text="Scheduling ID" />
+            <TableColumn fx:id="attendance_id_column" prefWidth="75.0" text="Attendance ID" />
+          <TableColumn fx:id="student_id_column" prefWidth="75.0" text="Student ID" />
+            <TableColumn fx:id="status_column" prefWidth="75.0" text="Status" />
         </columns>
          <columnResizePolicy>
             <TableView fx:constant="CONSTRAINED_RESIZE_POLICY" />

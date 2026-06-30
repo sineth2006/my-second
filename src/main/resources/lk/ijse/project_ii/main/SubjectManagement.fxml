@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ComboBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.text.Font?>
+
+<!-- 1. FIXED: Pointed to SubjectManagementController instead of Student -->
+
+<AnchorPane id="AnchorPane" prefHeight="400.0" prefWidth="700.0" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="lk.ijse.project_ii.viewController.SubjectManagementController">
+   <children>
+      <AnchorPane layoutX="4.0" layoutY="6.0" prefHeight="69.0" prefWidth="692.0" style="-fx-background-color: yellow;">
+         <children>
+            <Label layoutX="27.0" layoutY="14.0" text="Subject_Management" underline="true">
+               <font>
+                  <Font name="System Bold" size="29.0" />
+               </font>
+            </Label>
+            <Button fx:id="subject_management_back_button" layoutX="609.0" layoutY="22.0" mnemonicParsing="false" onAction="#subject_management_back_button_OnAction" text="⬅ BACK" />
+         </children>
+      </AnchorPane>
+      <AnchorPane layoutX="6.0" layoutY="82.0" prefHeight="310.0" prefWidth="208.0" style="-fx-background-color: #CAD3C8;" AnchorPane.leftAnchor="2.0" AnchorPane.topAnchor="82.0">
+         <children>
+            <Label layoutX="14.0" layoutY="14.0" text="Subject_ID" />
+            <!-- 2. FIXED: Changed fx:id to 'subject_id' to match Subject Controller -->
+            <TextField fx:id="subject_id" layoutX="14.0" layoutY="31.0" prefHeight="25.0" prefWidth="178.0" promptText="Subject_ID" />
+            <Label layoutX="15.0" layoutY="89.0" text="Subject_Name" />
+            <!-- 3. FIXED: Changed fx:id to 'subject_name' to match Subject Controller -->
+            <TextField fx:id="subject_name" layoutX="14.0" layoutY="122.0" prefHeight="25.0" prefWidth="178.0" promptText="Subject_Name" />
+            <Label layoutX="16.0" layoutY="177.0" text="Course ID" />
+            <Button fx:id="subject_managment_add_button" layoutX="10.0" layoutY="271.0" mnemonicParsing="false" onAction="#subject_managment_add_button_OnAction" prefHeight="25.0" prefWidth="43.0" style="-fx-background-color: #FEA47F;" text="Add" />
+            <Button fx:id="subject_managment_update_button" layoutX="64.0" layoutY="271.0" mnemonicParsing="false" onAction="#subject_managment_update_button_OnAction" style="-fx-background-color: #58B19F;" text="Update" />
+            <Button fx:id="subject_managment_delete_button" layoutX="135.0" layoutY="271.0" mnemonicParsing="false" onAction="#subject_managment_delete_button_OnAction" style="-fx-background-color: #D6A2E8;" text="Delete" />
+            <ComboBox fx:id="course_id_combobox" layoutX="13.0" layoutY="212.0" prefHeight="25.0" prefWidth="178.0" />
+         </children>
+      </AnchorPane>
+      <AnchorPane layoutX="220.0" layoutY="82.0" prefHeight="310.0" prefWidth="479.0" style="-fx-background-color: #CAD3C8;" AnchorPane.rightAnchor="2.0" AnchorPane.topAnchor="82.0">
+         <children>
+            <Label layoutX="14.0" layoutY="14.0" text="SUBJECT RECORDS">
+               <font>
+                  <Font name="System Bold" size="13.0" />
+               </font>
+            </Label>
+            <!-- 4. FIXED: Changed fx:id to 'subject_management_table' to match Subject Controller -->
+            <TableView fx:id="subject_management_table" layoutX="3.0" layoutY="49.0" onMouseClicked="#subject_management_table_clicked" prefHeight="256.0" prefWidth="470.0">
+               <columns>
+                  <TableColumn fx:id="subject_id_column" prefWidth="75.0" text="Subject ID" />
+                  <TableColumn fx:id="subject_name_column" prefWidth="75.0" text="Subject Name" />
+                  <TableColumn fx:id="course_id_column" prefWidth="75.0" text="Course ID" />
+               </columns>
+               <columnResizePolicy>
+                  <TableView fx:constant="CONSTRAINED_RESIZE_POLICY" />
+               </columnResizePolicy>
+            </TableView>
+         </children>
+      </AnchorPane>
+   </children>
+</AnchorPane>

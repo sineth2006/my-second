@@ -28,7 +28,10 @@ public class AdminDashboadController implements Initializable {
 
     @FXML
     private AnchorPane admin_main;
-
+    
+     @FXML
+    private Button subject_management_button;
+             
     @FXML
     private Button attendance_marking_button;
 
@@ -132,6 +135,18 @@ public class AdminDashboadController implements Initializable {
 
     }
      @FXML
+    void subject_management_button_OnAction(ActionEvent event) throws IOException {
+         Parent root=FXMLLoader.load(App.class.getResource("SubjectManagement.fxml"));
+        Stage stage=new Stage();
+        stage.setTitle("Subject Management");
+        stage.setScene(new Scene(root));
+        stage.show();
+        
+        Stage currentStage=(Stage)subject_management_button.getScene().getWindow();
+        currentStage.close();
+    }
+
+     @FXML
     void log_out_button_OnAction(ActionEvent event)throws IOException, SQLException {
         
         
@@ -145,8 +160,7 @@ public class AdminDashboadController implements Initializable {
         currentStage.close();
     }
 
-    
-     @Override
+          @Override
     public void initialize(URL url, ResourceBundle rb) {
         // TODO
     }    
