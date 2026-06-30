@@ -23,10 +23,13 @@ import javafx.scene.control.TextField;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.input.MouseEvent;
 import javafx.stage.Stage;
+import lk.ijse.project_ii.bo.CourseBo;
+import lk.ijse.project_ii.bo.impl.CourseBoImpl;
 import lk.ijse.project_ii.dao.CourseDAO;
 import lk.ijse.project_ii.dao.impl.CourseDAOImpl;
 import lk.ijse.project_ii.db.DBConnection;
 import lk.ijse.project_ii.db.alertMessage.AlertMessege;
+import lk.ijse.project_ii.dto.CourseDTO;
 import lk.ijse.project_ii.entity.CourseManagementEntity;
 
 /**
@@ -73,8 +76,9 @@ private Connection connect;
     @FXML
     private Button couse_management_update_button;
 
-    
-    private CourseDAO courseDao = new CourseDAOImpl();/////////////////////////////////
+      
+   private CourseDAO courseDao = new CourseDAOImpl();/////////////////////////////////
+    private final CourseBo courseBo = new CourseBoImpl(); 
     
     @FXML
     void Couse_Management_Add_button_OnAction(ActionEvent event) throws SQLException, Exception {
@@ -92,10 +96,10 @@ private Connection connect;
            return;
            } 
            
-              if (courseDao.existByName(name)) {
-             alert.errorMessage(name+"is already taken!!!");
-              }
-              
+             if (courseDao.existByName(name)) {
+            alert.errorMessage(name + " is already taken!");
+            return;
+}
                 //show database items in UI
                   CourseManagementEntity newcourse=new CourseManagementEntity(id,name,duration);
                     boolean isSaved = courseDao.save(newcourse);
@@ -114,36 +118,28 @@ private Connection connect;
     }
 
     @FXML
-    void Couse_Management_Update_button_OnAction(ActionEvent event) throws SQLException {
+    void Couse_Management_Update_button_OnAction(ActionEvent event) throws SQLException, Exception {
            int id=Integer.parseInt(course_id_txtbox.getText());
             String name=course_name_txtbox.getText();
            String duration= course_duration_txtbox.getText();
            
-      connect = DBConnection.getInstance().getConnection();
-      
-      if(connect!=null) {
-        String sql = "UPDATE course_management SET course_id=?, course_name=?, duration=? WHERE course_id =?";
-        PreparedStatement stm = connect.prepareStatement(sql);
+   
         
-        stm.setInt(1, id);
-        stm.setString(2, name);
-        stm.setString(3, duration);
-         stm.setInt(4, id);
-         
-          int result = stm.executeUpdate();
+    boolean isUpdated = courseBo.updateCourse(new CourseDTO(id, name, duration));
+
+            if (isUpdated) {
+            alert.successmessage("Updated Successfully!");
           
-          if(result>0){
-           alert.successmessage("Updated Successfully!!!");
-           CourseManagementEntity selectedcourse=couse_management_table.getSelectionModel().getSelectedItem();
-           if (selectedcourse != null) {
-                        selectedcourse.setCourse_name(name);
-                        selectedcourse.setCourse_duration(duration);
-                        couse_management_table.refresh();
+                CourseManagementEntity selected = couse_management_table.getSelectionModel().getSelectedItem();
+                if (selected != null) {
+                    selected.setCourse_name(name);
+                    selected.setCourse_duration(duration);
+                    couse_management_table.refresh();
            } 
                  Clear_txt();
           }
       }
-    }
+    
 
     @FXML
     void Couse_Management_back_button_OnAction(ActionEvent event) throws IOException {
@@ -160,31 +156,16 @@ private Connection connect;
 
     @FXML
     void Couse_Management_delete_button_OnAction(ActionEvent event) throws SQLException {
-           
-         int id=Integer.parseInt(course_id_txtbox.getText());
-         connect = DBConnection.getInstance().getConnection();
-            
-            try{if(connect!=null) {
-               
-                
-                String sql = "DELETE FROM course_management WHERE course_id =?";
-                
-                PreparedStatement stm = connect.prepareStatement(sql);
-                
-                stm.setInt(1, id);
-                
-                int result = stm.executeUpdate();
-               
-                if(result>0){
+          try {
+            int id = Integer.parseInt(course_id_txtbox.getText());
+            if (courseBo.deleteCourse(id)) {
                  alert.successmessage("Successfully deleted!!!");
                    Object selectedItem = couse_management_table.getSelectionModel().getSelectedItem();
                 couse_management_table.getItems().remove(selectedItem);
                 
              Clear_txt();
-                }else{
-                        System.out.println("Failed to delected course.");  
-                          }
                 }
+                
             }catch (Exception e) {
             
             }
@@ -207,22 +188,11 @@ private Connection connect;
     }
      @FXML
     public void loadTable() {
-   ObservableList<CourseManagementEntity>courseList =FXCollections.observableArrayList();
-   
-   try {
-        Connection conn = DBConnection.getInstance().getConnection();
-
-        String sql = "SELECT * FROM course_management";
-        PreparedStatement stm = conn.prepareStatement(sql);
-
-        ResultSet rs = stm.executeQuery();
-   while(rs.next()){
-       
-        courseList.add(new CourseManagementEntity(
-                    rs.getInt("course_id"),
-                    rs.getString("course_name"),
-                    rs.getString("duration")));
-   }
+     ObservableList<CourseManagementEntity> courseList = FXCollections.observableArrayList();
+        try {
+            for (CourseDTO dto : courseBo.getAllCourses()) {
+                courseList.add(new CourseManagementEntity(dto.getId(), dto.getName(), dto.getDuration()));
+            }
    couse_management_table.setItems(courseList);
    }catch (Exception e) {
         e.printStackTrace();

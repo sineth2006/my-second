@@ -4,6 +4,7 @@
  */
 package lk.ijse.project_ii.bo.impl;
 
+import java.util.ArrayList;
 import java.util.List;
 import lk.ijse.project_ii.bo.CourseBo;
 import lk.ijse.project_ii.dao.CourseDAO;
@@ -36,17 +37,36 @@ public class CourseBoImpl implements CourseBo {
 
     @Override
     public boolean updateCourse(CourseDTO dto) throws Exception {
-        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+         CourseManagementEntity entity = new CourseManagementEntity(
+                dto.getId(),
+                dto.getName(),
+                dto.getDuration()
+        );
+
+        return courseDAO.update(entity);
     }
 
     @Override
     public boolean deleteCourse(int id) throws Exception {
-        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+           return courseDAO.delete(id);
     }
 
     @Override
     public List<CourseDTO> getAllCourses() throws Exception {
-        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
-    }
+        List<CourseDTO> dtoList = new ArrayList<>();
+        
+         List<CourseManagementEntity> entities = courseDAO.findAll();
+         
+        for(CourseManagementEntity entity : entities) {
+          CourseDTO dto = new CourseDTO(
+            entity.getCourse_id(),
+            entity.getCourse_name(),
+            entity.getCourse_duration()
+        );
+        dtoList.add(dto);
+        }
+     return dtoList;
+        }
     
+     
 }

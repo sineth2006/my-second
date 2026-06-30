@@ -109,6 +109,12 @@ public class AttendanceReportController implements Initializable {
            date_range2.setValue(null);
         attendance_report_table.getItems().clear();
     }
+    
+    
+    @FXML
+    private void attendance_report_table_mouse_clicked(javafx.scene.input.MouseEvent event) {
+    System.out.println("Row clicked");
+}
 
     @FXML
     void attendance_report_generate_button_OnAction(ActionEvent event) {
@@ -240,7 +246,7 @@ public class AttendanceReportController implements Initializable {
         e.printStackTrace();}
      return -1;
      }
-    @Override
+    @FXML
     public void initialize(URL url, ResourceBundle rb) {
         // TODO
         load_combobox2_table();

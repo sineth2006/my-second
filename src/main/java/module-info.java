@@ -12,4 +12,6 @@ module lk.ijse.project_ii {
     exports lk.ijse.project_ii.viewController;
     opens lk.ijse.project_ii.viewController to javafx.fxml;
     opens lk.ijse.project_ii.entity to javafx.base;
+    //opens lk.ijse.project_ii.entity to javafx.base;
 }
+ 
