@@ -23,6 +23,8 @@ import javafx.scene.control.TextField;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.input.MouseEvent;
 import javafx.stage.Stage;
+import lk.ijse.project_ii.dao.CourseDAO;
+import lk.ijse.project_ii.dao.impl.CourseDAOImpl;
 import lk.ijse.project_ii.db.DBConnection;
 import lk.ijse.project_ii.db.alertMessage.AlertMessege;
 import lk.ijse.project_ii.entity.CourseManagementEntity;
@@ -71,8 +73,11 @@ private Connection connect;
     @FXML
     private Button couse_management_update_button;
 
+    
+    private CourseDAO courseDao = new CourseDAOImpl();/////////////////////////////////
+    
     @FXML
-    void Couse_Management_Add_button_OnAction(ActionEvent event) throws SQLException {
+    void Couse_Management_Add_button_OnAction(ActionEvent event) throws SQLException, Exception {
         
             int id=Integer.parseInt(course_id_txtbox.getText());
             String name=course_name_txtbox.getText();
@@ -84,48 +89,27 @@ private Connection connect;
               || duration.isEmpty()){
            
            alert.errorMessage("please fil all the fields!!");
-           } else{
-                String checkCourseName="SELECT * FROM course_management WHERE course_name = ?";
-           connect = DBConnection.getInstance().getConnection();
+           return;
+           } 
            
-           try{
-             prepare=connect.prepareStatement(checkCourseName);
-              prepare.setString(1, name);
-              result=prepare.executeQuery();
+              if (courseDao.existByName(name)) {
+             alert.errorMessage(name+"is already taken!!!");
+              }
               
-              if(result.next()){
-              alert.errorMessage(name+"is already taken!!!");
-              
-              }else{
-              String insertdata="INSERT INTO course_management(course_id,course_name,duration)VALUES(?,?,?)";
-              
-                prepare=connect.prepareStatement(insertdata);
-                prepare.setInt(1, id);
-                prepare.setString(2, name);
-                prepare.setString(3, duration);
-                 int result=prepare.executeUpdate();
-                  alert.successmessage("Added Successfully!");
-                  
-                  
-                  if(result>0){
-                   //show database items in UI
+                //show database items in UI
                   CourseManagementEntity newcourse=new CourseManagementEntity(id,name,duration);
-                  couse_management_table.getItems().add(newcourse);
+                    boolean isSaved = courseDao.save(newcourse);
+                  if(isSaved){
+                      couse_management_table.getItems().add(newcourse);
                   
-                  course_id_txtbox.clear();
-                  course_name_txtbox.clear();
-                  course_duration_txtbox.clear();
+                    alert.successmessage("Added Successfully!");
+                  
+                 Clear_txt();
                   
                   }
                   else{
                    System.out.println("Failed to add course table");
                   }
-              }
-             
-           
-           }catch(Exception e){
-             e.printStackTrace();}
-           }
            
     }
 
@@ -156,9 +140,7 @@ private Connection connect;
                         selectedcourse.setCourse_duration(duration);
                         couse_management_table.refresh();
            } 
-                  course_id_txtbox.clear();
-                  course_name_txtbox.clear();
-                  course_duration_txtbox.clear();
+                 Clear_txt();
           }
       }
     }
@@ -198,9 +180,7 @@ private Connection connect;
                    Object selectedItem = couse_management_table.getSelectionModel().getSelectedItem();
                 couse_management_table.getItems().remove(selectedItem);
                 
-                course_id_txtbox.clear();
-                  course_name_txtbox.clear();
-                  course_duration_txtbox.clear();
+             Clear_txt();
                 }else{
                         System.out.println("Failed to delected course.");  
                           }
@@ -247,6 +227,13 @@ private Connection connect;
    }catch (Exception e) {
         e.printStackTrace();
     }
+    }
+    public void Clear_txt(){
+    
+         course_id_txtbox.clear();
+                  course_name_txtbox.clear();
+                  course_duration_txtbox.clear();
+    
     }
     @FXML
     public void initialize(URL url, ResourceBundle rb) {

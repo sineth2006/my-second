@@ -170,10 +170,7 @@ public class AttendanceReportController implements Initializable {
             }
 
     }
-     @FXML
-    void attendance_report_table_mouse_clicked(MouseEvent event) {
-
-    }
+  
     @FXML
       void load_combobox2_table() {
          try{
