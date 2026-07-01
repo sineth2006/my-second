@@ -178,7 +178,7 @@ public class AttendanceReportController implements Initializable {
     }
   
     @FXML
-      void load_combobox2_table() {
+    void load_combobox2_table() {
          try{
         connect = DBConnection.getInstance().getConnection();
         
@@ -197,7 +197,7 @@ public class AttendanceReportController implements Initializable {
      }
     
     @FXML
-      void load_combobox1_table() {
+    void load_combobox1_table() {
          try{
         connect = DBConnection.getInstance().getConnection();
         
@@ -214,8 +214,9 @@ public class AttendanceReportController implements Initializable {
          }catch (Exception e) {
         e.printStackTrace();}
      }
-       @FXML
-      private int getSubjectIdByName(String selectedSubjectName){
+      
+    @FXML
+    private int getSubjectIdByName(String selectedSubjectName){
           String checkid="SELECT  subject_id FROM subjects WHERE subjects_name = ?";
           try{ connect = DBConnection.getInstance().getConnection();
               PreparedStatement pst = connect.prepareStatement(checkid);
@@ -230,8 +231,9 @@ public class AttendanceReportController implements Initializable {
         e.printStackTrace();}
      return -1;
      }
-        @FXML
-      private int getStudentIdByName(String selectedStudentName){
+      
+    @FXML
+    private int getStudentIdByName(String selectedStudentName){
           String checkid="SELECT  student_id FROM student_management WHERE student_name = ?";
           try{ connect = DBConnection.getInstance().getConnection();
               PreparedStatement pst = connect.prepareStatement(checkid);
@@ -246,6 +248,7 @@ public class AttendanceReportController implements Initializable {
         e.printStackTrace();}
      return -1;
      }
+      
     @FXML
     public void initialize(URL url, ResourceBundle rb) {
         // TODO
@@ -253,10 +256,10 @@ public class AttendanceReportController implements Initializable {
         load_combobox1_table();
        
         student_id_column.setCellValueFactory(new PropertyValueFactory<>("student_id"));
-    student_name_column.setCellValueFactory(new PropertyValueFactory<>("student_name"));
-    subject_column.setCellValueFactory(new PropertyValueFactory<>("subject"));
-    date_range_column.setCellValueFactory(new PropertyValueFactory<>("date"));
-    status_column.setCellValueFactory(new PropertyValueFactory<>("status"));
+        student_name_column.setCellValueFactory(new PropertyValueFactory<>("student_name"));
+        subject_column.setCellValueFactory(new PropertyValueFactory<>("subject"));
+        date_range_column.setCellValueFactory(new PropertyValueFactory<>("date"));
+        status_column.setCellValueFactory(new PropertyValueFactory<>("status"));
 
     }    
     

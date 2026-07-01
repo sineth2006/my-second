@@ -7,6 +7,8 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.ResourceBundle;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -24,8 +26,11 @@ import javafx.scene.control.TextField;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.input.MouseEvent;
 import javafx.stage.Stage;
+import lk.ijse.project_ii.bo.StudentBo;
+import lk.ijse.project_ii.bo.impl.StudentBoImpl;
 import lk.ijse.project_ii.db.DBConnection;
 import lk.ijse.project_ii.db.alertMessage.AlertMessege;
+import lk.ijse.project_ii.dto.StudentDTO;
 import lk.ijse.project_ii.entity.CourseManagementEntity;
 import lk.ijse.project_ii.entity.StudentManagementEntity;
 
@@ -37,10 +42,8 @@ import lk.ijse.project_ii.entity.StudentManagementEntity;
  */
 public class StudentManagementController implements Initializable {
 
-   private Connection connect;
-   private PreparedStatement prepare;
-   private ResultSet result;
-   private AlertMessege alert=new AlertMessege();
+     private AlertMessege alert = new AlertMessege();
+    private final StudentBo studentBO = new StudentBoImpl();
     
     @FXML
     private ComboBox<String> course_id_combobox;
@@ -101,69 +104,40 @@ public class StudentManagementController implements Initializable {
         
         
     }else{
-           int courseid=getCourseIdByName(selectedCourseName);//string course_name int course_id(by using "getCourseIdByName"method)
-        String checkstudentid="SELECT * FROM student_management WHERE student_id = ?";
-           connect = DBConnection.getInstance().getConnection();
-
-            try{
-             prepare=connect.prepareStatement(checkstudentid);
-              prepare.setInt(1, id);
-              result=prepare.executeQuery();
-              
-              if(result.next()){
-              alert.errorMessage(id+"is already taken!!!");
-              }else{
-               String insertdata="INSERT INTO student_management(student_id,student_name,telephone_number,email,course_id)VALUES(?,?,?,?,?)";
-              
-                prepare=connect.prepareStatement(insertdata);
-                prepare.setInt(1, id);
-                prepare.setString(2, name);
-                prepare.setString(3, telephone);
-                prepare.setString(4,Email);
-                prepare.setInt(5,courseid);
-                 int resultCount=prepare.executeUpdate();
-                 if(resultCount>0){
+          
+           try{  int courseid = studentBO.getCourseId(selectedCourseName);//string course_name int course_id(by using "getCourseIdByName"method)
+              StudentDTO dto = new StudentDTO(id, name, telephone, Email, courseid);
+              boolean isSaved = studentBO.saveStudent(dto);
+                if(isSaved) {
                   alert.successmessage("Added Successfully!");
                   //show in UI
                  StudentManagementEntity newstudent=new StudentManagementEntity(id,name,telephone,Email,courseid);
                   student_management_table.getItems().add(newstudent);
 
-                  student_id.clear();
-                  email.clear();
-                  telephone_number.clear();
-                  student_name.clear();
-                  
-                 } 
-              }
+                  clear_txt();
+               
+        }
             }catch (Exception e) {
         e.printStackTrace();}
         }
     }
     
+    
     @FXML
-    void student_managment_update_button_OnAction(ActionEvent event) throws SQLException {
+    void student_managment_update_button_OnAction(ActionEvent event) throws SQLException, Exception {
             int id=Integer.parseInt(student_id.getText());
             String name=student_name.getText();
            String telephone= telephone_number.getText();
             String Email= email.getText();
           String selectedCourseName=course_id_combobox.getSelectionModel().getSelectedItem();
 
-           
-      connect = DBConnection.getInstance().getConnection();
-       if(connect!=null) {
-        String sql = "UPDATE student_management SET student_id=?, student_name=?, telephone_number=?, email=? ,course_id=? WHERE student_id =?";
-        PreparedStatement stm = connect.prepareStatement(sql);
-          int courseid=getCourseIdByName(selectedCourseName);
-        stm.setInt(1, id);
-        stm.setString(2, name);
-        stm.setString(3, telephone);
-        stm.setString(4, Email);
+            try {
+                int courseid = studentBO.getCourseId(selectedCourseName);
+                 StudentDTO dto = new StudentDTO(id, name, telephone, Email, courseid);
+                
+                boolean isUpdated = studentBO.updateStudent(dto);
        
-        stm.setInt(5, courseid);
-        stm.setInt(6, id);
-         
-          int result = stm.executeUpdate();
-        if(result>0){
+          if(isUpdated) {
            alert.successmessage("Updated Successfully!!!");
            StudentManagementEntity selectedstudent=student_management_table.getSelectionModel().getSelectedItem();
            if (selectedstudent != null) {
@@ -175,35 +149,22 @@ public class StudentManagementController implements Initializable {
                             selectedstudent.setCourse_id(courseid);
                         student_management_table.refresh();
            } 
-                  student_id.clear();
-                  student_name.clear();
-                  telephone_number.clear();
-                  email.clear();
+                  clear_txt();
                   
           }   
 
-      
-      
-    }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
     }
     @FXML
-    void student_managment_delete_button_OnAction(ActionEvent event) throws SQLException {
+    void student_managment_delete_button_OnAction(ActionEvent event) throws SQLException, Exception {
 
           int id=Integer.parseInt(student_id.getText());
-         connect = DBConnection.getInstance().getConnection();
-         
-           try{if(connect!=null) {
-               
-                
-                String sql = "DELETE FROM student_management WHERE student_id =?";
-                
-                PreparedStatement stm = connect.prepareStatement(sql);
-                
-                stm.setInt(1, id);
-                
-                int result = stm.executeUpdate();
-               
-                if(result>0){
+       ////////////////////connecton
+        try{  
+            boolean isdeleted=studentBO.deleteStudent(id) ;
+            if(isdeleted){ 
                  alert.successmessage("Successfully deleted!!!");
                    Object selectedItem = student_management_table.getSelectionModel().getSelectedItem();
                 student_management_table.getItems().remove(selectedItem);
@@ -215,9 +176,9 @@ public class StudentManagementController implements Initializable {
                 }else{
                         System.out.println("Failed to delected student.");  
                           }
-                }
+                
             }catch (Exception e) {
-            
+              e.printStackTrace();
             }
 
     }
@@ -225,17 +186,8 @@ public class StudentManagementController implements Initializable {
      @FXML
      void load_combobox_table() {
          try{
-        connect = DBConnection.getInstance().getConnection();
-        
-        String sql="SELECT course_name FROM course_management";
-            PreparedStatement pst = connect.prepareStatement(sql);
-             ResultSet rs = pst.executeQuery();
-             //results add to combo box
-             while(rs.next()){
-             String value = rs.getString("course_name");
-             course_id_combobox.getItems().add(value);
-             System.out.println("ok............");
-             }
+         ArrayList<String> courseNames = studentBO.getCourseNames();
+             course_id_combobox.setItems(FXCollections.observableArrayList(courseNames));
          
          }catch (Exception e) {
         e.printStackTrace();}
@@ -260,21 +212,16 @@ public class StudentManagementController implements Initializable {
    ObservableList<StudentManagementEntity>studentList =FXCollections.observableArrayList();
    
    try {
-        Connection conn = DBConnection.getInstance().getConnection();
-
-        String sql = "SELECT * FROM student_management";
-        PreparedStatement stm = conn.prepareStatement(sql);
-
-        ResultSet rs = stm.executeQuery();
-   while(rs.next()){
-       
-        studentList.add(new StudentManagementEntity(
-                    rs.getInt("student_id"),
-                    rs.getString("student_name"),
-                    rs.getString("telephone_number"),
-                    rs.getString("email"),
-                    rs.getInt("course_id")
-        ));
+        List<StudentDTO> allStudents = studentBO.getAllStudents();
+            
+            for (StudentDTO dto : allStudents) {
+                studentList.add(new StudentManagementEntity(
+                    dto.getStudent_id(),
+                    dto.getStudent_name(),
+                    dto.getTelephone_number(),
+                    dto.getEmail(),
+                    dto.getCourse_id()
+                ));
    }
    student_management_table.setItems(studentList);
    }catch (Exception e) {
@@ -282,38 +229,18 @@ public class StudentManagementController implements Initializable {
     }
     }
 
-     @FXML
-     private int getCourseIdByName(String selectedCourseName){
-          String checkid="SELECT course_id FROM course_management WHERE course_name = ?";
-          try{ connect = DBConnection.getInstance().getConnection();
-              PreparedStatement pst = connect.prepareStatement(checkid);
-              pst.setString(1, selectedCourseName);
-              result=pst.executeQuery();
-               if(result.next()){
-                   //return this course_id instead of check_id because when check database table he cant finfd name check_id in table that is why i put column name in that return type
-                 return result.getInt("course_id");
-               }
-               
-          }catch (Exception e) {
-        e.printStackTrace();}
-     return -1;
-     }
+   
       @FXML
-     private String getCourseNameById(int selectedCourseId){
-          String checkname="SELECT course_name FROM course_management WHERE course_id = ?";
-          try{ connect = DBConnection.getInstance().getConnection();
-              PreparedStatement pst = connect.prepareStatement(checkname);
-              pst.setInt(1, selectedCourseId);
-              result=pst.executeQuery();
-               if(result.next()){
-                   //return this course_id instead of check_id because when check database table he cant finfd name check_id in table that is why i put column name in that return type
-                 return result.getString("course_name");
-               }
-               
-          }catch (Exception e) {
-        e.printStackTrace();}
-     return null;
-     }
+private String getCourseNameById(int selectedCourseId) {
+    try {
+       
+        return studentBO.getCourseName(selectedCourseId);
+    } catch (Exception e) {
+        e.printStackTrace();
+    }
+    return null;
+}
+
      @FXML
     void student_management_table_clicked(MouseEvent event) {
         
@@ -332,6 +259,14 @@ public class StudentManagementController implements Initializable {
         telephone_number .setText(telephone);
         email.setText(Email);
         course_id_combobox.setValue(coursename);
+    }
+    public void clear_txt(){
+    
+    student_id.clear();
+      email.clear();
+     telephone_number.clear();
+    student_name.clear();
+                  
     }
     @Override
     public void initialize(URL url, ResourceBundle rb) {
