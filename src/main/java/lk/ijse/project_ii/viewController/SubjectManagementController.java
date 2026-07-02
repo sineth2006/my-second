@@ -10,6 +10,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.ResourceBundle;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -27,8 +28,11 @@ import javafx.scene.control.TextField;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.input.MouseEvent;
 import javafx.stage.Stage;
+import lk.ijse.project_ii.bo.SubjectBo;
+import lk.ijse.project_ii.bo.impl.SubjectBoImpl;
 import lk.ijse.project_ii.db.DBConnection;
 import lk.ijse.project_ii.db.alertMessage.AlertMessege;
+import lk.ijse.project_ii.dto.SubjectDTO;
 import lk.ijse.project_ii.entity.SubjectManagementEntity;
 import lk.ijse.project_ii.main.App;
 
@@ -43,7 +47,7 @@ public class SubjectManagementController implements Initializable {
    private PreparedStatement prepare;
    private ResultSet result;
    private AlertMessege alert=new AlertMessege();
-
+    private final SubjectBo subjectBO = new SubjectBoImpl();
     @FXML
     private TableColumn<SubjectManagementEntity,Integer> course_id_column;
 
@@ -77,8 +81,6 @@ public class SubjectManagementController implements Initializable {
     @FXML
     private TableColumn<SubjectManagementEntity,String> subject_name_column;
 
-   
-
     @FXML
     void subject_management_back_button_OnAction(ActionEvent event) throws IOException {
            Parent root=FXMLLoader.load(App.class.getResource("AdminDashboad.fxml"));
@@ -102,37 +104,24 @@ public class SubjectManagementController implements Initializable {
         {
              alert.errorMessage("please fil all the fields!!");
         }else{
-           int courseid=getCourseIdByName(selectedCourseName);//string course_name convert int course_id(by using "getCourseIdByName"method)
-        String checksubjectid="SELECT * FROM subjects WHERE subject_id = ?";
-           connect = DBConnection.getInstance().getConnection();
-              try{
-             prepare=connect.prepareStatement(checksubjectid);
-              prepare.setInt(1, id);
-              result=prepare.executeQuery();
-              
-              if(result.next()){
-              alert.errorMessage(id+"is already taken!!!");
-              }else{
-               String insertdata="INSERT INTO subjects(subject_id,subjects_name,course_id)VALUES(?,?,?)";
-              
-                prepare=connect.prepareStatement(insertdata);
-                prepare.setInt(1, id);
-                prepare.setString(2, name);
-                  prepare.setInt(3,courseid);
-                  int resultCount=prepare.executeUpdate();
-                 if(resultCount>0){
-                  alert.successmessage("Added Successfully!");
+                   int courseId = subjectBO.getCourseIdByName(selectedCourseName);
+                   SubjectDTO dto = new SubjectDTO(id, name, courseId);
+                   boolean isadd=subjectBO.addSubject(dto);
+//     
+          if(isadd){
+                alert.successmessage("Added Successfully!");
                   //show in UI
-                 SubjectManagementEntity newsubject=new SubjectManagementEntity(id,name,courseid);
+                 SubjectManagementEntity newsubject=new SubjectManagementEntity(id,name,courseId);
                   subject_management_table.getItems().add(newsubject);
 
                   subject_id.clear();
                   subject_name.clear();
-                   } 
-              }
-            }catch (Exception e) {
-        e.printStackTrace();}
+                   } else{
+          
+          alert.errorMessage("can't add data");
           }
+              }
+          
 
     }
     
@@ -142,26 +131,21 @@ public class SubjectManagementController implements Initializable {
             String name=subject_name.getText();
             String selectedCourseName=course_id_combobox.getSelectionModel().getSelectedItem();
 
-           connect = DBConnection.getInstance().getConnection();
-       if(connect!=null) {
-        String sql = "UPDATE subjects SET subject_id=?,subjects_name=? ,course_id=? WHERE subject_id =?";
-        PreparedStatement stm = connect.prepareStatement(sql);
-          int courseid=getCourseIdByName(selectedCourseName);
-        stm.setInt(1, id);
-        stm.setString(2, name);
-         stm.setInt(3, courseid);
-        stm.setInt(4, id);
-         
-          int result = stm.executeUpdate();
-         if(result>0){
-           alert.successmessage("Updated Successfully!!!");
+        if (subject_id.getText().isEmpty() || subject_name.getText().isEmpty() || course_id_combobox.getSelectionModel().isEmpty()) {
+            alert.errorMessage("Fields cannot be empty for updating!");
+            return;
+        }
+        else{
+             int courseId = subjectBO.getCourseIdByName(selectedCourseName);
+
+            SubjectDTO dto = new SubjectDTO(id, name, courseId);
            SubjectManagementEntity selectedsubject=subject_management_table.getSelectionModel().getSelectedItem();
            if (selectedsubject != null) {
                
                         selectedsubject.setSubject_name(name);
-                         selectedsubject.setCourse_id(courseid);
+                         selectedsubject.setCourse_id(courseId);
                         subject_management_table.refresh();
-           } 
+           
                   subject_id.clear();
                   subject_name.clear();
                   
@@ -173,23 +157,13 @@ public class SubjectManagementController implements Initializable {
     void subject_managment_delete_button_OnAction(ActionEvent event) throws SQLException {
         
           int id=Integer.parseInt(subject_id.getText());
-         connect = DBConnection.getInstance().getConnection();
          
-           try{if(connect!=null) {
-               
-                
-                String sql = "DELETE FROM subjects WHERE subject_id =?";
-                
-                PreparedStatement stm = connect.prepareStatement(sql);
-                
-                stm.setInt(1, id);
-                
-                int result = stm.executeUpdate();
-               
-                if(result>0){
+           if (subjectBO.deleteSubject(id)) {
                  alert.successmessage("Successfully deleted!!!");
-                   Object selectedItem = subject_management_table.getSelectionModel().getSelectedItem();
-                subject_management_table.getItems().remove(selectedItem);
+                  SubjectManagementEntity selectedItem = subject_management_table.getSelectionModel().getSelectedItem();
+                if (selectedItem != null) {
+                    subject_management_table.getItems().remove(selectedItem);
+                }
                 
                    subject_id.clear();
                   subject_name.clear();  
@@ -197,106 +171,77 @@ public class SubjectManagementController implements Initializable {
                 }else{
                         System.out.println("Failed to delected subject.");  
                           }
-                }
-            }catch (Exception e) {
-            
-            }
+               
 
-
-        
-        
     }
 
     
-     @FXML
-     void load_combobox_table() {
-         try{
-        connect = DBConnection.getInstance().getConnection();
-        
-        String sql="SELECT course_name FROM course_management";
-            PreparedStatement pst = connect.prepareStatement(sql);
-             ResultSet rs = pst.executeQuery();
-             //results add to combo box
-             while(rs.next()){
-             String value = rs.getString("course_name");
-             course_id_combobox.getItems().add(value);
-             System.out.println("ok............");
-             }
-         
-         }catch (Exception e) {
-        e.printStackTrace();}
-     }
-       @FXML
-     private int getCourseIdByName(String selectedCourseName){
-          String checkid="SELECT course_id FROM course_management WHERE course_name = ?";
-          try{ connect = DBConnection.getInstance().getConnection();
-              PreparedStatement pst = connect.prepareStatement(checkid);
-              pst.setString(1, selectedCourseName);
-              result=pst.executeQuery();
-               if(result.next()){
-                   //return this course_id instead of check_id because when check database table he cant finfd name check_id in table that is why i put column name in that return type
-                 return result.getInt("course_id");
-               }
-               
-          }catch (Exception e) {
-        e.printStackTrace();}
-     return -1;
-     }
-      @FXML
-     private String getCourseNameById(int selectedCourseId){
-          String checkname="SELECT course_name FROM course_management WHERE course_id = ?";
-          try{ connect = DBConnection.getInstance().getConnection();
-              PreparedStatement pst = connect.prepareStatement(checkname);
-              pst.setInt(1, selectedCourseId);
-              result=pst.executeQuery();
-               if(result.next()){
-                   //return this course_id instead of check_id because when check database table he cant finfd name check_id in table that is why i put column name in that return type
-                 return result.getString("course_name");
-               }
-               
-          }catch (Exception e) {
-        e.printStackTrace();}
-     return null;
-     }
-         @FXML
+  @FXML
     public void loadTable() {
-   ObservableList<SubjectManagementEntity>subjecttList =FXCollections.observableArrayList();
-   
-   try {
-        Connection conn = DBConnection.getInstance().getConnection();
-
-        String sql = "SELECT * FROM subjects";
-        PreparedStatement stm = conn.prepareStatement(sql);
-
-        ResultSet rs = stm.executeQuery();
-   while(rs.next()){
-       
-        subjecttList.add(new SubjectManagementEntity(
-                    rs.getInt("subject_id"),
-                    rs.getString("subjects_name"),
-                    rs.getInt("course_id")
-        ));
-   }
-   subject_management_table.setItems(subjecttList);
-   }catch (Exception e) {
-        e.printStackTrace();
-    }
+   ObservableList<SubjectManagementEntity> subjectList = FXCollections.observableArrayList();
+        try {
+            // 1. Fetch data arrays downstream from business logic layer DTOs
+            ArrayList<SubjectDTO> allSubjects = subjectBO.getAllSubjects();
+            
+            // 2. Map data tier objects into presentation table view model items
+            for (SubjectDTO dto : allSubjects) {
+                subjectList.add(new SubjectManagementEntity(
+                    dto.getSubject_id(), 
+                    dto.getSubject_name(), 
+                    dto.getCourse_id()
+                ));
+            }
+            
+            // 3. Bind collection items smoothly onto presentation grid layout
+            subject_management_table.setItems(subjectList);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    
     }
      @FXML
     void subject_management_table_clicked(MouseEvent event) {
           
-            SubjectManagementEntity clicksubject=subject_management_table.getSelectionModel().getSelectedItem();
+          SubjectManagementEntity clicksubject = subject_management_table.getSelectionModel().getSelectedItem();
         
-        String id=Integer.toString(clicksubject.getSubject_id());
-        String name=clicksubject.getSubject_name();
-        int selectedCourseId=clicksubject.getCourse_id();
-        
-        String coursename=getCourseNameById(selectedCourseId);//int coure_id convert string course_name(by using "getCourseNameById"method)
-        
-        subject_id.setText(id);
-        subject_name.setText(name);
-        course_id_combobox.setValue(coursename);
+        // Null check validation prevents runtime errors if an empty grid space is clicked
+        if (clicksubject != null) {
+            try {
+                // 2. Extract internal layout properties out of target entity item
+                String id = Integer.toString(clicksubject.getSubject_id());
+                String name = clicksubject.getSubject_name();
+                int selectedCourseId = clicksubject.getCourse_id();
+                
+                // 3. Delegate ID-to-Name conversion down to the business layer
+                String coursename = subjectBO.getCourseNameById(selectedCourseId);
+                
+                // 4. Safely populate interactive user text fields and dropdowns on screen
+                subject_id.setText(id);
+                subject_name.setText(name);
+                course_id_combobox.setValue(coursename);
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
 
+    }
+      @FXML
+    public void load_combobox_table() {
+        try {
+            
+            course_id_combobox.getItems().clear();
+            
+            
+            ArrayList<String> courseNamesList = subjectBO.getCourseNames();
+            
+           
+            course_id_combobox.setItems(FXCollections.observableArrayList(courseNamesList));
+            
+            System.out.println("ok............");
+        } catch (Exception e) {
+            e.printStackTrace();
+            alert.errorMessage("Failed to load course options to selection drop-down list.");
+        }
     }
     @Override
     public void initialize(URL url, ResourceBundle rb) {
@@ -305,8 +250,9 @@ public class SubjectManagementController implements Initializable {
         subject_name_column.setCellValueFactory(new PropertyValueFactory<>("subject_name"));
       
         course_id_column.setCellValueFactory(new PropertyValueFactory<>("course_id"));
-        load_combobox_table();
+        
         loadTable();
+        load_combobox_table();
     }    
     
 }

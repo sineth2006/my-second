@@ -115,13 +115,12 @@ public class ClassSchedulingDAOImpl implements ClassSchedulingDAO {
         result = prepare.executeQuery();
         if (result.next()) {
             return new ClassShedulingEntity(
-                result.getInt("schedule_id"),
-               result.getInt("course_id"),
+                result.getInt("scheduling_id"),
+                result.getInt("course_id"),
                 result.getInt("subject_id"),
                 result.getInt("lecture_id"),
                 result.getString("class_date"),
-                result.getString("class_time")
-            );
+                result.getString("class_time"));
         }
         return null; 
     }

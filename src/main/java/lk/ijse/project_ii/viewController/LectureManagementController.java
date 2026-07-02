@@ -7,6 +7,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.ResourceBundle;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -24,8 +25,11 @@ import javafx.scene.control.TextField;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.input.MouseEvent;
 import javafx.stage.Stage;
+import lk.ijse.project_ii.bo.LectureManagementBo;
+import lk.ijse.project_ii.bo.impl.LectureManagementBoImpl;
 import lk.ijse.project_ii.db.DBConnection;
 import lk.ijse.project_ii.db.alertMessage.AlertMessege;
+import lk.ijse.project_ii.dto.LectureDTO;
 import lk.ijse.project_ii.entity.LectureManagementEntity;
 import lk.ijse.project_ii.entity.SubjectManagementEntity;
 
@@ -40,8 +44,8 @@ public class LectureManagementController implements Initializable {
    private PreparedStatement prepare;
    private ResultSet result;
    private AlertMessege alert=new AlertMessege();
-
-
+   
+    private final LectureManagementBo lectureBO = new LectureManagementBoImpl();
 
     @FXML
     private TextField lecture_id;
@@ -108,8 +112,9 @@ public class LectureManagementController implements Initializable {
     }
 
       @FXML
-    void lecture_managment_add_button_OnAction(ActionEvent event) throws SQLException {
+    void lecture_managment_add_button_OnAction(ActionEvent event) throws SQLException, Exception {
         
+     
           int id=Integer.parseInt(lecture_id.getText());
          String name=lecture_name.getText();
          String telephone= telephone_number.getText().trim();//remove extra spaces
@@ -124,49 +129,27 @@ public class LectureManagementController implements Initializable {
                ||selectedSubjectName.isEmpty())
         {
              alert.errorMessage("please fil all the fields!!");
-        
-          }else{
-          int userid=getUserIdByName(selecteUserName);//string course_name convert int course_id(by using "getCourseIdByName"method)
-          int subjectid=getSubjectIdByName(selectedSubjectName);
-          String checklecturetid="SELECT * FROM lecture_management WHERE lecture_id = ?";
-           connect = DBConnection.getInstance().getConnection();
-              try{
-             prepare=connect.prepareStatement(checklecturetid);
-              prepare.setInt(1, id);
-              result=prepare.executeQuery();
-              
-                if(result.next()){
-              alert.errorMessage(id+"is already taken!!!");
-              }else{
-               String insertdata="INSERT INTO lecture_management(lecture_id,lecture_name,email,telephone_number,subject_id,user_id)VALUES(?,?,?,?,?,?)";
-              
-                prepare=connect.prepareStatement(insertdata);
-                prepare.setInt(1, id);
-                prepare.setString(2, name);
-                prepare.setString(3,email);
-                prepare.setString(4,telephone); 
-                prepare.setInt(5,subjectid);
-                prepare.setInt(6,userid);
-                  int resultCount=prepare.executeUpdate();
-                 if(resultCount>0){
-                  alert.successmessage("Added Successfully!");
-                     //show in UI
-                 LectureManagementEntity newlecture=new LectureManagementEntity(id,name,email,telephone,subjectid,userid);
-                  lecture_management_table.getItems().add(newlecture);
-
-                  lecture_id.clear();
-                  lecture_name.clear();
-                  telephone_number.clear();
-                  email_txt.clear();
+             return;
+        }else{
+           int userid = lectureBO.getUserIdByName(selecteUserName);
+            int subjectid = lectureBO.getSubjectIdByName(selectedSubjectName);
+         
+             LectureDTO newlecture = new LectureDTO(id, name, email, telephone, subjectid, userid);
+            boolean isSaved = lectureBO.saveLecture(newlecture);
+            
+                    if (isSaved) {
+                    alert.successmessage("Added Successfully!");
+                      LectureManagementEntity newslecturer=new LectureManagementEntity(id, name, email, telephone, subjectid, userid);
+                     lecture_management_table.getItems().add(newslecturer);
+                    
+                     clear();
                   
                    } 
-              }
-              }catch (Exception e) {
-        e.printStackTrace();}
+              
     }
     }
      @FXML
-    void lecture_managment_update_button_OnAction(ActionEvent event) throws SQLException {
+    void lecture_managment_update_button_OnAction(ActionEvent event) throws SQLException, Exception {
            int id=Integer.parseInt(lecture_id.getText());
          String name=lecture_name.getText();
          String telephone= telephone_number.getText().trim();//remove extra spaces
@@ -174,21 +157,14 @@ public class LectureManagementController implements Initializable {
          String selecteUserName=user_id.getSelectionModel().getSelectedItem();
          String selectedSubjectName=subject_id.getSelectionModel().getSelectedItem();
 
-         connect = DBConnection.getInstance().getConnection();
-       if(connect!=null) {
-        String sql = "UPDATE lecture_management SET lecture_id=?, lecture_name=?, email=?, telephone_number=? ,user_id=?,subject_id=? WHERE lecture_id =?";
-        PreparedStatement stm = connect.prepareStatement(sql);
-          int userid=getUserIdByName(selecteUserName);
-          int subjectid=getSubjectIdByName(selectedSubjectName);
-        stm.setInt(1, id);
-        stm.setString(2, name);
-        stm.setString(3, email);
-        stm.setString(4, telephone);
-        stm.setInt(5,userid );
-        stm.setInt(6,subjectid );
-        stm.setInt(7,id );
-          int result = stm.executeUpdate();
-        if(result>0){
+       
+         int userid = lectureBO.getUserIdByName(selecteUserName);
+            int subjectid = lectureBO.getSubjectIdByName(selectedSubjectName);
+
+            LectureDTO updatedLecture = new LectureDTO(id, name, email, telephone, subjectid, userid);
+            boolean isUpdated = lectureBO.updateLecture(updatedLecture);
+            
+             if (isUpdated) { 
            alert.successmessage("Updated Successfully!!!");
            LectureManagementEntity selectedlecture=lecture_management_table.getSelectionModel().getSelectedItem();
            if (selectedlecture != null) {
@@ -201,207 +177,120 @@ public class LectureManagementController implements Initializable {
                         selectedlecture.setSubject_id(subjectid);
                         lecture_management_table.refresh();
            } 
-                  lecture_id.clear();
-                  lecture_name.clear();
-                  telephone_number.clear();
-                  email_txt.clear();
+                 clear();
 
                   
           }   
 
        }
-    }
+    
 
     @FXML
     void lecture_managment_delete_button_OnAction(ActionEvent event) throws SQLException {
           
-        int id=Integer.parseInt(lecture_id.getText());
-         connect = DBConnection.getInstance().getConnection();
+       try{ int id=Integer.parseInt(lecture_id.getText());
+           boolean isDeleted = lectureBO.deleteLecture(id);
          
-           try{if(connect!=null) {
-               
-                
-                String sql = "DELETE FROM lecture_management WHERE lecture_id =?";
-                
-                PreparedStatement stm = connect.prepareStatement(sql);
-                
-                stm.setInt(1, id);
-                
-                int result = stm.executeUpdate();
-               
-                if(result>0){
+           if (isDeleted) {
                  alert.successmessage("Successfully deleted!!!");
                    Object selectedItem = lecture_management_table.getSelectionModel().getSelectedItem();
                 lecture_management_table.getItems().remove(selectedItem);
-                
-               lecture_id.clear();
-               lecture_name.clear();
-               telephone_number.clear();
-                email_txt.clear();
+              clear();
                 }else{
                         System.out.println("Failed to delected lecture.");  
                           }
-                }
+                
             }catch (Exception e) {
-            
+            e.printStackTrace();
             }
 
     }
 
-     private int getUserIdByName(String selecteUserName){
-          String checkid="SELECT  user_id FROM users WHERE user_name = ?";
-          try{ connect = DBConnection.getInstance().getConnection();
-              PreparedStatement pst = connect.prepareStatement(checkid);
-              pst.setString(1, selecteUserName);
-              result=pst.executeQuery();
-               if(result.next()){
-                   //return this course_id instead of check_id because when check database table he cant finfd name check_id in table that is why i put column name in that return type
-                 return result.getInt("user_id");
-               }
-               
-          }catch (Exception e) {
-        e.printStackTrace();}
-     return -1;
-     }
-      @FXML
-      private int getSubjectIdByName(String selectedSubjectName){
-          String checkid="SELECT  subject_id FROM subjects WHERE subjects_name = ?";
-          try{ connect = DBConnection.getInstance().getConnection();
-              PreparedStatement pst = connect.prepareStatement(checkid);
-              pst.setString(1, selectedSubjectName);
-              result=pst.executeQuery();
-               if(result.next()){
-                   //return this course_id instead of check_id because when check database table he cant finfd name check_id in table that is why i put column name in that return type
-                 return result.getInt("subject_id");
-               }
-               
-          }catch (Exception e) {
-        e.printStackTrace();}
-     return -1;
-     }
-       @FXML
-     private String getUserNameById(int selectedUserId){
-          String checkname="SELECT user_name FROM users WHERE user_id = ?";
-          try{ connect = DBConnection.getInstance().getConnection();
-              PreparedStatement pst = connect.prepareStatement(checkname);
-              pst.setInt(1, selectedUserId);
-              result=pst.executeQuery();
-               if(result.next()){
-                   //return this course_id instead of check_id because when check database table he cant finfd name check_id in table that is why i put column name in that return type
-                 return result.getString("user_name");
-               }
-               
-          }catch (Exception e) {
-        e.printStackTrace();}
-     return null;
-     }
-       @FXML
-     private String getsubjectNameById(int selectedSubjectId){
-          String checkname="SELECT subjects_name FROM subjects WHERE subject_id = ?";
-          try{ connect = DBConnection.getInstance().getConnection();
-              PreparedStatement pst = connect.prepareStatement(checkname);
-              pst.setInt(1, selectedSubjectId);
-              result=pst.executeQuery();
-               if(result.next()){
-                   //return this course_id instead of check_id because when check database table he cant finfd name check_id in table that is why i put column name in that return type
-                 return result.getString("subjects_name");
-               }
-               
-          }catch (Exception e) {
-        e.printStackTrace();}
-     return null;
-     }
-
-
+    
+       
       @FXML
      void load_combobox1_table() {
-         try{
-        connect = DBConnection.getInstance().getConnection();
-        
-        String sql = "SELECT user_name FROM users " +
-             "INNER JOIN positions ON users.position_id = positions.position_id " +
-             "WHERE  positions.position_id = 2";
-
-            PreparedStatement pst = connect.prepareStatement(sql);
-             ResultSet rs = pst.executeQuery();
-             //results add to combo box
-             while(rs.next()){
-             String value = rs.getString("user_name");
-             user_id.getItems().add(value);
-             System.out.println("ok............");
-             }
-         
-         }catch (Exception e) {
-        e.printStackTrace();}
+         try {
+            ArrayList<String> userNames = lectureBO.getAllUserNamesByPosition(2);
+            for (String value : userNames) {
+                user_id.getItems().add(value);
+                System.out.println("ok............");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
      }
       @FXML
      void load_combobox2_table() {
-         try{
-        connect = DBConnection.getInstance().getConnection();
         
-        String sql="SELECT subjects_name FROM subjects";
-            PreparedStatement pst = connect.prepareStatement(sql);
-             ResultSet rs = pst.executeQuery();
-             //results add to combo box
-             while(rs.next()){
-             String value = rs.getString("subjects_name");
-             subject_id.getItems().add(value);
-             System.out.println("ok............");
-             }
-         
-         }catch (Exception e) {
-        e.printStackTrace();}
+          try {
+            ArrayList<String> subjectNames = lectureBO.getAllSubjectNames();
+            for (String value : subjectNames) {
+                subject_id.getItems().add(value);
+                System.out.println("ok............");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
      }
-      @FXML
-    public void loadTable() {
-   ObservableList<LectureManagementEntity>lectureList =FXCollections.observableArrayList();
-   
-   try {
-        Connection conn = DBConnection.getInstance().getConnection();
+     
+     
+    @FXML
+    public void loadTable() throws Exception {
+        ArrayList<LectureDTO> dtoList = lectureBO.getAllLectures();
 
-        String sql = "SELECT * FROM lecture_management";
-        PreparedStatement stm = conn.prepareStatement(sql);
+        ObservableList<LectureManagementEntity> list = FXCollections.observableArrayList();
 
-        ResultSet rs = stm.executeQuery();
-   while(rs.next()){
-       
-        lectureList.add(new LectureManagementEntity(
-                    rs.getInt("lecture_id"),
-                    rs.getString("lecture_name"),
-                     rs.getString("email"),
-                    rs.getString("telephone_number"),
-                     rs.getInt("subject_id"),
-                    rs.getInt("user_id")
-        ));
-   }
-   lecture_management_table.setItems(lectureList);
-   }catch (Exception e) {
-        e.printStackTrace();
-    }
+        for (LectureDTO dto : dtoList) {
+            list.add(new LectureManagementEntity(
+                    dto.getLecture_id(),
+                    dto.getLecture_name(),
+                    dto.getEmail(),
+                    dto.getTelephone_number(),
+                    dto.getSubject_id(),
+                    dto.getUser_id()
+            ));
+        }
+
+        lecture_management_table.setItems(list);
     }
     @FXML
     void lecture_management_mouseclicked(MouseEvent event) {
-         LectureManagementEntity clicklecture=lecture_management_table.getSelectionModel().getSelectedItem();
-        
-        String id=Integer.toString(clicklecture.getLecture_id());
-        String name=clicklecture.getLecture_name();
-        String telephone=clicklecture.getTelephone_number();
-        String Email=clicklecture.getEmail();
-        int selectedUserId=clicklecture.getUser_id();
-        int selectedsubjectId=clicklecture.getSubject_id();
-        
-        String username=getUserNameById(selectedUserId);//int coure_id convert string course_name(by using "getCourseNameById"method)
-          String subjectname=getsubjectNameById(selectedsubjectId);//int coure_id convert string course_name(by using "getCourseNameById"method)
+        LectureManagementEntity clicklecture =
+                lecture_management_table.getSelectionModel().getSelectedItem();
 
-        lecture_id.setText(id);
-        lecture_name.setText(name);
-         email_txt.setText(Email);
-        telephone_number .setText(telephone);
-        user_id.setValue(username);
-        subject_id.setValue(subjectname);
+        if (clicklecture == null) {
+            return; // prevent crash
+        }
+
+        lecture_id.setText(String.valueOf(clicklecture.getLecture_id()));
+        lecture_name.setText(clicklecture.getLecture_name());
+        email_txt.setText(clicklecture.getEmail());
+        telephone_number.setText(clicklecture.getTelephone_number());
+
+        try {
+            String username = lectureBO.getUserNameById(clicklecture.getUser_id());
+            String subjectname = lectureBO.getSubjectNameById(clicklecture.getSubject_id());
+
+            user_id.setValue(username);
+            subject_id.setValue(subjectname);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
-    @Override
+    @FXML
+    public void clear() {
+        lecture_id.clear();
+        lecture_name.clear();
+        email_txt.clear();
+        telephone_number.clear();
+        user_id.setValue(null);
+        subject_id.setValue(null);
+    }
+    
+    @FXML
     public void initialize(URL url, ResourceBundle rb) {
         // TODO
         
@@ -415,7 +304,10 @@ public class LectureManagementController implements Initializable {
        
         load_combobox1_table();
         load_combobox2_table();
-        loadTable();
+        try {
+            loadTable();
+        } catch (Exception e) {
+            e.printStackTrace();}
     }    
     
 }
