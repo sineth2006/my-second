@@ -7,6 +7,8 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.ResourceBundle;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -24,8 +26,11 @@ import javafx.scene.control.TableView;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.input.MouseEvent;
 import javafx.stage.Stage;
+import lk.ijse.project_ii.bo.AttendanceMarkingBo;
+import lk.ijse.project_ii.bo.impl.AttendanceMarkingBoImpl;
 import lk.ijse.project_ii.db.DBConnection;
 import lk.ijse.project_ii.db.alertMessage.AlertMessege;
+import lk.ijse.project_ii.dto.AttendanceMarkingDTO;
 import lk.ijse.project_ii.entity.AttendanceMarkingEntity;
 import lk.ijse.project_ii.entity.AttendanceMarkingEntity.AttendanceStatus;
 
@@ -36,11 +41,11 @@ import lk.ijse.project_ii.entity.AttendanceMarkingEntity.AttendanceStatus;
  */
 public class AttendanceMarkingController implements Initializable {
     
-    private Connection connect;
-    private PreparedStatement prepare;
-    private ResultSet result;
-    private AlertMessege alert = new AlertMessege();
-    
+      private Connection connect;
+   private PreparedStatement prepare;
+   private ResultSet result;
+   private AlertMessege alert=new AlertMessege();
+    private final AttendanceMarkingBo attendanceMarkingBo = new AttendanceMarkingBoImpl();
     @FXML
     private Button attendance_marking_back_button;
 
@@ -99,43 +104,49 @@ public class AttendanceMarkingController implements Initializable {
 
     @FXML
     void attendance_marking_save_attendance_button_OnAction(ActionEvent event) throws SQLException {
-       
-          ObservableList<AttendanceMarkingEntity> items = attendance_marking_table.getItems();
-    if (items.isEmpty()) {
+
+    ObservableList<AttendanceMarkingEntity> items =
+            attendance_marking_table.getItems();
+
+    if (items == null || items.isEmpty()) {
+        alert.errorMessage("Please load and mark attendance first!");
         return;
     }
 
     try {
-        connect = DBConnection.getInstance().getConnection();
-        
-        // FIX: Omit attendance_id entirely from both segments of the SQL string template
-        String sql = "INSERT INTO student_attendance (scheduling_id, student_id, status) VALUES (?, ?, ?)";
-        PreparedStatement pst = connect.prepareStatement(sql);
-        
-        for (AttendanceMarkingEntity row : items) {
-            // Parameter index 1 maps to scheduling_id
-            pst.setInt(1, row.getSchedulingId());
-            
-            // Parameter index 2 maps to student_id
-            pst.setInt(2, row.getStudentId());
-            
-            // Parameter index 3 maps to status
-            if (row.getStatus() == AttendanceStatus.present) {
-                pst.setString(3, "Present");
-            } else {
-                pst.setString(3, "Absent");
-            }
-            
-            pst.addBatch(); 
-        }  
-        
-        pst.executeBatch();
-        alert.successmessage("Attendance Saved Successfully");
-        System.out.println("Attendance saved successfully!");
-        
+
+        // Convert ENTITY → DTO (because BO expects DTO)
+        List<AttendanceMarkingDTO> dtoList = new ArrayList<>();
+
+        for (AttendanceMarkingEntity entity : items) {
+
+            AttendanceMarkingDTO dto = new AttendanceMarkingDTO(
+                    entity.getAttendanceId(),
+                    entity.getSchedulingId(),
+                    entity.getStudentId(),
+                    entity.getStatus().name()   // present / absent
+            );
+
+            dtoList.add(dto);
+        }
+
+        boolean isSaved = attendanceMarkingBo.saveAttendance(dtoList);
+
+        if (isSaved) {
+            alert.successmessage("Attendance Saved Successfully!");
+
+            // optional: refresh table or keep data
+            attendance_marking_table.refresh();
+
+            clearAttendance(); // optional method
+        } else {
+            alert.errorMessage("Failed to save attendance!");
+        }
+
     } catch (Exception e) {
         e.printStackTrace();
-        alert.errorMessage("Database Saving Error: " + e.getMessage());
+        alert.errorMessage("Error: " + e.getMessage());
+    
     }
     }
     
@@ -151,104 +162,84 @@ public class AttendanceMarkingController implements Initializable {
     
     @FXML
     void load_combobox1_table() {
-        class_combobox.getItems().clear();
+           class_combobox.getItems().clear();
         try {
-            connect = DBConnection.getInstance().getConnection();
-            String sql = "SELECT scheduling_id FROM class_scheduling";
-            PreparedStatement pst = connect.prepareStatement(sql);
-            ResultSet rs = pst.executeQuery();
-            
-            while (rs.next()) {
-                Integer value = rs.getInt("scheduling_id");
-                class_combobox.getItems().add(value);
-                System.out.println("ok...ok...");
-            }
+            // FIX: Replaced direct interface name reference with instance object 'attendanceMarkingBo'
+            var scheduleIds = attendanceMarkingBo.loadAvailableSchedules();
+            class_combobox.getItems().addAll(scheduleIds);
         } catch (Exception e) {
-            e.printStackTrace();
+            
         }
     }
     
     @FXML
-    void loadTable() {
-        Integer selectedSchedule = class_combobox.getValue();
-        System.out.println("Selected schedule = " + selectedSchedule);
+    void loadTable() throws SQLException {
 
-        if (selectedSchedule == null) return;
-        
-        ObservableList<AttendanceMarkingEntity> attendancemarkinglist = FXCollections.observableArrayList();
-        
-        try {
-            connect = DBConnection.getInstance().getConnection();
+    Integer selectedSchedule = class_combobox.getValue();
 
-            String sql =  "SELECT sm.student_id, sm.student_name "
-                   + "FROM student_management sm "
-                   + "JOIN class_scheduling cs ON sm.course_id = cs.course_id "
-                   + "WHERE cs.scheduling_id = ?";
-                       
-            prepare = connect.prepareStatement(sql);
-            prepare.setInt(1, selectedSchedule); 
-            
-            result = prepare.executeQuery();
-            int count = 0;
-
-            while (result.next()) {
-                count++;
-                  int studentId = result.getInt("student_id");
-            String studentName = result.getString("student_name");
-                
-                // Print check data directly to console log output
-                System.out.println(" " + studentId + " " + result.getString("student_name"));
-                
-                // Maps default fallback status value using your nested entity enum
-                AttendanceStatus defaultStatus = AttendanceStatus.absent;
-
-                // FIX: Adding item instances dynamically into your observable array list
-                attendancemarkinglist.add(new AttendanceMarkingEntity(
-                     count,        // Maps to attendance_id field
-                    selectedSchedule,  // Maps to scheduling_id field
-                    studentId,         // Maps to student_id field
-                    defaultStatus      // Maps to status field enum
-                ));
-            }
-
-            System.out.println("TOTAL ROWS IN TABLE: " + count);
-            
-            // FIX: Bind the generated list to populate the visible UI grid rows
-            attendance_marking_table.setItems(attendancemarkinglist);
-            attendance_marking_table.refresh();
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+    if (selectedSchedule == null) {
+        attendance_marking_table.getItems().clear();
+        return;
     }
 
+    ArrayList<AttendanceMarkingDTO> dtoList =
+            (ArrayList<AttendanceMarkingDTO>) attendanceMarkingBo
+                    .generateAttendanceSheet(selectedSchedule);
+
+    ObservableList<AttendanceMarkingEntity> list =
+            FXCollections.observableArrayList();
+
+for (AttendanceMarkingDTO dto : dtoList) {
+
+    AttendanceMarkingEntity.AttendanceStatus status;
+
+    if (dto.getStatus().equalsIgnoreCase("present")) {
+        status = AttendanceMarkingEntity.AttendanceStatus.present;
+    } else {
+        status = AttendanceMarkingEntity.AttendanceStatus.absent;
+    }
+
+    AttendanceMarkingEntity entity = new AttendanceMarkingEntity(
+            dto.getAttendanceId(),
+            dto.getSchedulingId(),
+            dto.getStudentId(),
+            status
+    );
+
+    list.add(entity);
+    }
+
+    attendance_marking_table.setItems(list);
+    }
     @Override
     public void initialize(URL url, ResourceBundle rb) {
-        // Bind column layout grids to look up variable keys inside AttendanceMarkingEntity
-        scheduling_id_column.setCellValueFactory(new PropertyValueFactory<>("attendanceId"));
-    attendance_id_column.setCellValueFactory(new PropertyValueFactory<>("studentId")); 
-    student_id_column.setCellValueFactory(new PropertyValueFactory<>("schedulingId"));
-    status_column.setCellValueFactory(new PropertyValueFactory<>("status"));
-    
-      status_column.setCellValueFactory(param -> {
-        AttendanceMarkingEntity entity = param.getValue();
-        CheckBox checkBox = new CheckBox();
+        // FIXED COLUMN MAPPING (IMPORTANT)
+        attendance_id_column.setCellValueFactory(new PropertyValueFactory<>("attendanceId"));
+        student_id_column.setCellValueFactory(new PropertyValueFactory<>("studentId"));
+        scheduling_id_column.setCellValueFactory(new PropertyValueFactory<>("schedulingId"));
 
-        // Check the box if current status is present
-        checkBox.setSelected(entity.getStatus() == AttendanceStatus.present);
+        // STATUS COLUMN WITH CHECKBOX
+        status_column.setCellValueFactory(param -> {
+            AttendanceMarkingEntity entity = param.getValue();
+            CheckBox checkBox = new CheckBox();
 
-        // Update the underlying data model instantly whenever a user clicks the CheckBox
-        checkBox.selectedProperty().addListener((observable, oldValue, newValue) -> {
-            if (newValue) {
-                entity.setStatus(AttendanceStatus.present);
-            } else {
-                entity.setStatus(AttendanceStatus.absent);
-            }
+            checkBox.setSelected(entity.getStatus() == AttendanceMarkingEntity.AttendanceStatus.present);
+
+            checkBox.selectedProperty().addListener((obs, oldVal, newVal) -> {
+                entity.setStatus(newVal
+                        ? AttendanceMarkingEntity.AttendanceStatus.present
+                        : AttendanceMarkingEntity.AttendanceStatus.absent);
+            });
+
+            return new javafx.beans.property.SimpleObjectProperty<>(checkBox);
         });
-
-        return new javafx.beans.property.SimpleObjectProperty<>(checkBox);
-    });
 
         load_combobox1_table();
     }
+    
+    @FXML
+    private void clearAttendance() {
+    class_combobox.getSelectionModel().clearSelection();
+    attendance_marking_table.getItems().clear();
+}
 }
