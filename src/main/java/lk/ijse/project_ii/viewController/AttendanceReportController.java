@@ -7,6 +7,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.time.LocalDate;
 import java.util.ResourceBundle;
+import javafx.collections.FXCollections;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -21,6 +22,8 @@ import javafx.scene.control.TableView;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.input.MouseEvent;
 import javafx.stage.Stage;
+import lk.ijse.project_ii.bo.AttendanceReportBo;
+import lk.ijse.project_ii.bo.impl.AttendanceReportBoImpl;
 import lk.ijse.project_ii.db.DBConnection;
 import lk.ijse.project_ii.entity.AttendanceReportEntity;
 import lk.ijse.project_ii.main.App;
@@ -99,7 +102,7 @@ public class AttendanceReportController implements Initializable {
         Stage currentStage=(Stage)attendance_report_back_button.getScene().getWindow();
         currentStage.close();
     }
-
+      private final AttendanceReportBo reportBO = new AttendanceReportBoImpl();
     @FXML
     void attendance_report_clear_button_OnAction(ActionEvent event) {
 
@@ -118,142 +121,58 @@ public class AttendanceReportController implements Initializable {
 
     @FXML
     void attendance_report_generate_button_OnAction(ActionEvent event) {
-           attendance_report_table.getItems().clear();
-           
-           
-            String selectedStudentName = studentId_combobox.getValue();
-            String selectedSubjectName = subjectid_combobox.getValue();
-            
-             int studentid= getStudentIdByName(selectedStudentName);
-            int subjectid=getSubjectIdByName( selectedSubjectName);
-           
-            
-            LocalDate fromDate = date_range1.getValue();
-            LocalDate toDate = date_range2.getValue();
+        attendance_report_table.getItems().clear();
+        
+        String selectedStudentName = studentId_combobox.getValue();
+        String selectedSubjectName = subjectid_combobox.getValue();
+        LocalDate fromDate = date_range1.getValue();
+        LocalDate toDate = date_range2.getValue();
 
-            if (selectedStudentName == null || selectedSubjectName == null || fromDate == null || toDate == null) {
-                System.out.println("Please select all fields.");
-                return;
+        if (selectedStudentName == null || selectedSubjectName == null || fromDate == null || toDate == null) {
+            System.out.println("Please select all fields.");
+            return;
+        }
+
+        try {
+            // Get DTO Data array from Business Object layer 
+            var dtoList = reportBO.generateReport(selectedStudentName, selectedSubjectName, fromDate, toDate);
+            
+            // Map DTO payload items straight down into localized UI entities array list wrapper
+            var entityList = FXCollections.<AttendanceReportEntity>observableArrayList();
+            for (var dto : dtoList) {
+                entityList.add(new AttendanceReportEntity(
+                    dto.getStudentId(),
+                    dto.getStudentName(),
+                    dto.getSubjectName(),
+                    dto.getAttendanceDate(),
+                    dto.getStatus()
+                ));
             }
 
-            try {
-                connect = DBConnection.getInstance().getConnection();
-                
-                String sql =
-    "SELECT a.student_id, s.student_name, sub.subjects_name, a.status, a.attendance_date " +
-    "FROM student_attendance a " +
-    "JOIN student_management s ON a.student_id = s.student_id " +
-    "JOIN class_scheduling sh ON a.scheduling_id = sh.scheduling_id " +
-    "JOIN subjects sub ON sh.subject_id = sub.subject_id " +
-    "WHERE a.student_id = ? " +
-      "AND sub.subject_id = ? " +
-    "AND a.attendance_date BETWEEN ? AND ?"
-                        + "GROUP BY a.student_id, a.attendance_date, a.status";
-                
-                 PreparedStatement pst = connect.prepareStatement(sql);
-
-                pst.setInt(1, studentid);
-                pst.setInt(2, subjectid);
-                pst.setDate(3, java.sql.Date.valueOf(fromDate));
-                pst.setDate(4, java.sql.Date.valueOf(toDate));
-
-                ResultSet rs = pst.executeQuery();
-                   
-                 while (rs.next()) {
-
-                    AttendanceReportEntity attendance = new AttendanceReportEntity(
-                            rs.getInt("student_id"),
-                            rs.getString("student_name"),
-                            rs.getString("subjects_name"),
-                            rs.getString("attendance_date"),
-                            rs.getString("status")
-                    );
-
-                    attendance_report_table.getItems().add(attendance);
-                }
-                } catch (Exception e) {
-                e.printStackTrace();
-            }
+            attendance_report_table.setItems(entityList);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
 
     }
   
     @FXML
-    void load_combobox2_table() {
-         try{
-        connect = DBConnection.getInstance().getConnection();
-        
-        String sql="SELECT subjects_name FROM subjects";
-            PreparedStatement pst = connect.prepareStatement(sql);
-             ResultSet rs = pst.executeQuery();
-             //results add to combo box
-             while(rs.next()){
-             String value = rs.getString("subjects_name");
-             subjectid_combobox.getItems().add(value);
-             System.out.println("ok............");
-             }
-         
-         }catch (Exception e) {
-        e.printStackTrace();}
+    void load_combobox_table() {
+          studentId_combobox.getItems().clear();
+        subjectid_combobox.getItems().clear();
+        try {
+            studentId_combobox.getItems().addAll(reportBO.loadStudents());
+            subjectid_combobox.getItems().addAll(reportBO.loadSubjects());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
      }
     
-    @FXML
-    void load_combobox1_table() {
-         try{
-        connect = DBConnection.getInstance().getConnection();
-        
-        String sql="SELECT student_name FROM student_management";
-            PreparedStatement pst = connect.prepareStatement(sql);
-             ResultSet rs = pst.executeQuery();
-             //results add to combo box
-             while(rs.next()){
-             String value = rs.getString("student_name");
-             studentId_combobox.getItems().add(value);
-             System.out.println("ok............");
-             }
-         
-         }catch (Exception e) {
-        e.printStackTrace();}
-     }
-      
-    @FXML
-    private int getSubjectIdByName(String selectedSubjectName){
-          String checkid="SELECT  subject_id FROM subjects WHERE subjects_name = ?";
-          try{ connect = DBConnection.getInstance().getConnection();
-              PreparedStatement pst = connect.prepareStatement(checkid);
-              pst.setString(1, selectedSubjectName);
-              result=pst.executeQuery();
-               if(result.next()){
-                   //return this course_id instead of check_id because when check database table he cant finfd name check_id in table that is why i put column name in that return type
-                 return result.getInt("subject_id");
-               }
-               
-          }catch (Exception e) {
-        e.printStackTrace();}
-     return -1;
-     }
-      
-    @FXML
-    private int getStudentIdByName(String selectedStudentName){
-          String checkid="SELECT  student_id FROM student_management WHERE student_name = ?";
-          try{ connect = DBConnection.getInstance().getConnection();
-              PreparedStatement pst = connect.prepareStatement(checkid);
-              pst.setString(1, selectedStudentName);
-              result=pst.executeQuery();
-               if(result.next()){
-                   //return this course_id instead of check_id because when check database table he cant finfd name check_id in table that is why i put column name in that return type
-                 return result.getInt("student_id");
-               }
-               
-          }catch (Exception e) {
-        e.printStackTrace();}
-     return -1;
-     }
-      
+    
     @FXML
     public void initialize(URL url, ResourceBundle rb) {
         // TODO
-        load_combobox2_table();
-        load_combobox1_table();
+       load_combobox_table();
        
         student_id_column.setCellValueFactory(new PropertyValueFactory<>("student_id"));
         student_name_column.setCellValueFactory(new PropertyValueFactory<>("student_name"));

@@ -164,11 +164,14 @@ public class AttendanceMarkingController implements Initializable {
     void load_combobox1_table() {
            class_combobox.getItems().clear();
         try {
-            // FIX: Replaced direct interface name reference with instance object 'attendanceMarkingBo'
-            var scheduleIds = attendanceMarkingBo.loadAvailableSchedules();
-            class_combobox.getItems().addAll(scheduleIds);
+            // Retrieve data through layers
+            List<Integer> scheduleIds = attendanceMarkingBo.loadAvailableSchedules();
+            if (scheduleIds != null) {
+                class_combobox.getItems().addAll(scheduleIds);
+            }
         } catch (Exception e) {
-            
+            // FIX: Print the stack trace so database exceptions (like closed connections) show up in your console
+            e.printStackTrace();
         }
     }
     
